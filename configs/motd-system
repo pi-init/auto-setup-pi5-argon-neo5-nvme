@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -eu
+
+if [ -r /etc/os-release ]; then
+  . /etc/os-release
+  OS="${PRETTY_NAME:-$NAME}"
+else
+  OS="$(uname -srm)"
+fi
+
+AARCH="$(printf '%s' $(uname -m) | tr '[:lower:]' '[:upper:]')"
+OS="${OS} (${AARCH})"
+KERNEL="$(uname -r 2>/dev/null || true)"
+HOST="$(uname -n)"
+
+IP="$(ip -4 route get 1.1.1.1 2>/dev/null \
+  | awk '{for(i=1;i<=NF;i++) if($i=="src"){print $(i+1); exit}}')"
+[ -n "$IP" ] || IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+[ -n "$IP" ] || IP="N/A"
+
+UP="$(uptime -p 2>/dev/null | sed 's/^up //')"
+[ -n "$UP" ] || UP="$(uptime 2>/dev/null | sed 's/^.*up \([^,]*\),.*/\1/')"
+[ -n "$UP" ] || UP="N/A"
+
+if [ -n "$KERNEL" ]; then
+  printf "\nOS: %s\nKernel: %s\nHostname: %s\nIP: %s\nUptime: %s\n" \
+    "$OS" "$KERNEL" "$HOST" "$IP" "$UP"
+else
+  printf "\nOS: %s\nHostname: %s\nIP: %s\nUptime: %s\n" \
+    "$OS" "$HOST" "$IP" "$UP"
+fi

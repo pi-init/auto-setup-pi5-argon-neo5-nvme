@@ -115,17 +115,48 @@ write_files:
   append: false
   owner: root:root
   permissions: '0600'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/IP.issue
+  defer: true
+  path: /etc/issue.d/IP.issue
+  append: false
+  owner: root:root
+  permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/issue
+  defer: true
+  path: /etc/issue
+  append: false
+  owner: root:root
+  permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/motd
+  defer: true
+  path: /etc/motd
+  append: false
+  owner: root:root
+  permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/motd-system
+  defer: true
+  path: /etc/update-motd.d/10-system
+  append: false
+  owner: root:root
+  permissions: '0755'
 
 byobu_by_default: disable-system
 disable_ec2_metadata: true
 
 runcmd:
+  - rm -rf /etc/update-motd.d/*
   - sed -i '$ s/$/ loglevel=3 ipv6.disable=1 logo.nologo/' /boot/firmware/cmdline.txt
   - sed -i 's/^IPV6=.*/IPV6=no/' /etc/default/ufw || echo 'IPV6=no' >> /etc/default/ufw
   - ufw default allow outgoing
   - ufw default deny incoming
   - ufw default deny routed
-  - ufw allow OpenSSH
+  - ufw allow from 10.0.0.0/8 to any port 22 proto tcp
+  - ufw allow from 172.16.0.0/12 to any port 22 proto tcp
+  - ufw allow from 192.168.0.0/16 to any port 22 proto tcp
   - ufw --force enable
   - systemctl enable --now ssh
 
