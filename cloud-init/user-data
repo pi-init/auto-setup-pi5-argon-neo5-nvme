@@ -1,0 +1,117 @@
+#cloud-config
+
+hostname: server
+fqdn: server.lan
+locale: en_US.UTF-8
+timezone: UTC
+
+keyboard:
+  layout: us
+
+users:
+  - name: admin
+    gecos: System Administrator
+    groups: [sudo, docker]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    lock_passwd: false
+    shell: /bin/bash
+
+groups: [docker]
+
+chpasswd:
+  expire: true
+  users:
+  - {name: admin, password: password, type: text}
+
+ssh_pwauth: true
+disable_root: true
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+packages:
+  - openssh-server
+  - ufw
+  - curl
+  - git
+
+apt:
+  preserve_sources_list: true
+
+ntp:
+  enabled: true
+  ntp_client: auto
+  servers:
+    - "0.pool.ntp.org"
+    - "1.pool.ntp.org"
+    - "2.pool.ntp.org"
+    - "3.pool.ntp.org"
+
+ssh_deletekeys: true
+allow_public_ssh_keys: false
+ssh_genkeytypes: [ed25519]
+ssh_quiet_keygen: true
+
+manage_etc_hosts: localhost
+manage_resolv_conf: false
+preserve_hostname: false
+create_hostname_file: true
+prefer_fqdn_over_hostname: true
+
+growpart:
+  devices: [/]
+  mode: auto
+  ignore_growroot_disabled: false
+
+resize_rootfs: noblock
+
+rpi:
+  enable_usb_gadget: false
+  interfaces:
+    spi: false
+    i2c: false
+    onewire: false
+    serial:
+      console: false
+      hardware: false
+
+write_files:
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/config.txt
+  defer: true
+  path: /boot/firmware/config.txt
+  append: false
+  owner: root:root
+  permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/sysctl.conf
+  defer: true
+  path: /etc/sysctl.conf
+  append: false
+  owner: root:root
+  permissions: '0644'
+
+byobu_by_default: disable-system
+
+runcmd:
+  - sed -i 's/^IPV6=.*/IPV6=no/' /etc/default/ufw || echo 'IPV6=no' >> /etc/default/ufw
+  - ufw allow OpenSSH
+  - ufw default allow outgoing
+  - ufw default deny incoming
+  - ufw default deny routed
+  - ufw --force enable
+
+bootcmd:
+  - rm -f /etc/hostname
+  - sysctl net.ipv6.conf.all.disable_ipv6=1
+
+final_message: |
+  The Raspberry Pi 5 cloud-init process has finished!
+  Timestamp: $timestamp
+  Uptime: $uptime
+  Version: $version
+
+power_state:
+  delay: now
+  mode: poweroff

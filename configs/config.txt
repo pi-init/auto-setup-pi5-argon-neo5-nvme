@@ -8,12 +8,12 @@ dtparam=random=on
 dtparam=pciex1_gen=3
 
 dtparam=act_led_trigger=heartbeat
-dtparam=act_led_activelow=off
+dtparam=act_led_activelow=on
 dtparam=pwr_led_trigger=heartbeat
-dtparam=pwr_led_activelow=off
+dtparam=pwr_led_activelow=on
 
 dtoverlay=vc4-kms-v3d
-dtoverlay=disable-hdmi
+dtoverlay=disable-wifi
 dtoverlay=disable-bt
 
 auto_initramfs=1
