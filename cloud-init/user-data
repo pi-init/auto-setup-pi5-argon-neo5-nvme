@@ -11,12 +11,12 @@ keyboard:
 users:
   - name: admin
     gecos: System Administrator
-    groups: [sudo, docker]
+    groups: [sudo, ssh-users, docker]
     sudo: ["ALL=(ALL) NOPASSWD:ALL"]
     lock_passwd: false
     shell: /bin/bash
 
-groups: [docker]
+groups: [ssh-users, docker]
 
 chpasswd:
   expire: true
@@ -50,8 +50,11 @@ ntp:
 
 ssh_deletekeys: true
 allow_public_ssh_keys: false
-ssh_genkeytypes: [ed25519]
+ssh_genkeytypes: [rsa, ecdsa, ed25519]
 ssh_quiet_keygen: true
+
+ssh_publish_hostkeys:
+  enabled: false
 
 manage_etc_hosts: localhost
 manage_resolv_conf: false
@@ -98,8 +101,23 @@ write_files:
   append: false
   owner: root:root
   permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/logind.conf
+  defer: true
+  path: /etc/systemd/logind.conf
+  append: false
+  owner: root:root
+  permissions: '0644'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/sshd_config
+  defer: true
+  path: /etc/ssh/sshd_config.d/10-cloud-init.conf
+  append: false
+  owner: root:root
+  permissions: '0600'
 
 byobu_by_default: disable-system
+disable_ec2_metadata: true
 
 runcmd:
   - sed -i '$ s/$/ loglevel=3 ipv6.disable=1 logo.nologo/' /boot/firmware/cmdline.txt
