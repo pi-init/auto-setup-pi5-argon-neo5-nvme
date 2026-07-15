@@ -1,1 +1,7 @@
+\d \t
+
 IP address: \4
+Hostname: \n
+
+\l
+

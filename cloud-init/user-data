@@ -11,12 +11,12 @@ keyboard:
 users:
   - name: admin
     gecos: System Administrator
-    groups: [sudo, ssh-users, docker]
+    groups: [sudo, ssh-users, docker, tcpdump]
     sudo: ["ALL=(ALL) NOPASSWD:ALL"]
     lock_passwd: false
     shell: /bin/bash
 
-groups: [ssh-users, docker]
+groups: [ssh-users, docker, tcpdump]
 
 chpasswd:
   expire: true
@@ -33,8 +33,23 @@ package_reboot_if_required: true
 packages:
   - openssh-server
   - ufw
+  - fail2ban
+  - tcpdump
+  - lastlog2
   - curl
+  - wget
   - git
+  - zip
+  - unzip
+  - top
+  - htop
+  - btop
+  - screen
+  - traceroute
+  - dnsutils
+  - whois
+  - mtr-tiny
+  - build-essential
 
 apt:
   preserve_sources_list: true
@@ -111,7 +126,7 @@ write_files:
 - source:
     uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/sshd_config
   defer: true
-  path: /etc/ssh/sshd_config.d/10-cloud-init.conf
+  path: /etc/ssh/sshd_config.d/10-sshd_config.conf
   append: false
   owner: root:root
   permissions: '0600'
@@ -139,16 +154,23 @@ write_files:
 - source:
     uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/motd-system
   defer: true
-  path: /etc/update-motd.d/10-system
+  path: /etc/update-motd.d/motd-system
   append: false
   owner: root:root
   permissions: '0755'
+- source:
+    uri: https://raw.githubusercontent.com/pi-init/auto-setup-pi5-argon-neo5-nvme/refs/heads/main/configs/jail.local
+  defer: true
+  path: /etc/fail2ban/jail.local
+  append: false
+  owner: root:root
+  permissions: '0644'
 
 byobu_by_default: disable-system
 disable_ec2_metadata: true
 
 runcmd:
-  - rm -rf /etc/update-motd.d/*
+  - rm -- /etc/update-motd.d/[0-9][0-9]-*
   - sed -i '$ s/$/ loglevel=3 ipv6.disable=1 logo.nologo/' /boot/firmware/cmdline.txt
   - sed -i 's/^IPV6=.*/IPV6=no/' /etc/default/ufw || echo 'IPV6=no' >> /etc/default/ufw
   - ufw default allow outgoing
@@ -158,6 +180,7 @@ runcmd:
   - ufw allow from 172.16.0.0/12 to any port 22 proto tcp
   - ufw allow from 192.168.0.0/16 to any port 22 proto tcp
   - ufw --force enable
+  - systemctl enable --now fail2ban
   - systemctl enable --now ssh
 
 bootcmd:
