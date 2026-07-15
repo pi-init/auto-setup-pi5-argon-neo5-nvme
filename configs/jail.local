@@ -8,6 +8,6 @@ banaction = ufw
 [sshd]
 enabled = true
 port = ssh
-banaction = ufw-ssh
+banaction = ufw[application=SSH]
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s
